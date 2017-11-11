@@ -1,1 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patent Citation Spectroscopy </title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" type="text/css" href="css/bulma.css">
+  <link rel="stylesheet" type="text/css" href="css/base.css">
+  <script src="js/jquery.min.js" type="text/javascript"></script>
+  <script src="js/jquery.ezpz_hint.min.js" type="text/javascript"></script>
+  <script src="js/highcharts.js"></script>
+  <script src="js/exporting.js"></script>
+  <style>
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+}
+</style>
+  <script type="text/javascript">
+    function load() {
+      document.getElementById("receiver1").innerHTML = ' Granted Patents';
+      document.getElementById("receiver2").innerHTML = 'Unique Patent References Analyzed';
+      //document.getElementById("receiver3").innerHTML = 'Unique Application References Analyzed';
+    }
+  </script>
+</head>
+<body onload="load()">
+  <nav class="nav has-shadow" id="top">
+    <div class="container">
+      <div class="nav-left">
+        <a class="nav-item" href="index.html">
+          <img src="images/logo.png" height="520px" alt="Description">
+        </a>
+      </div>
+      <span class="nav-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <div class="nav-right nav-menu">
+       
+        <span class="nav-item">
+  
+          <a class="button is-info">
+           <strong><div id="receiver1"></div> </strong> </a>
+          </a>
+          <a class="button is-info">
+            <strong><div id="receiver2"></div> </strong> </a>
+          </a>
+        <strong><a href="https://arxiv.org/pdf/1710.03349.pdf" target="_blank"> &nbsp;Background Article </strong></a> and 
+        <strong><a href="example.png" target="_blank"> &nbsp;&nbsp;Example </strong></a>
+             
+         
+          <!--<a class="button is-info">
+            <strong><div id="receiver3"></div> </strong> </a>
+          </a>-->
 
+        </span>
+      </div>
+    </div>
+  </nav>
+  <section class="section">
+    <div class="container content">
+      <h1>Search US Patents (1978-2016)</h1>
+
+        <div style="font-size:20px;"><strong>Keyword(s)? </strong><input class="hint" type="text" placeholder="siRNA,RNAi" id="searchTerm" style="width:300px;" title="" />
+        
+        <input class="button" type="submit" value="Search" onclick="loader()"/></div>
+        <br/><br/><!--<br/><br/>--><div align="center" id="loading"></div>
+        <div id="canvas" style="margin-left:10%;height: 350px;width: 80%;"></div>
+        <div align="center" style="font-size:28px;" id="findings"></div>
+        
+    </div>
+  </section>
+  <script type="text/javascript" src="js/bulma.js"></script>
+  <script type="text/javascript">
+
+function loader(){
+  document.getElementById('loading').innerHTML = '<br/><strong>DOWNLOADING & ANALYZING PATENT DATA. PLEASE WAIT, THIS MAY TAKE 1-2 MINUTES.</strong>';
+  setTimeout(function(){ total(); }, 3000);
+}
+
+   function total() {
+    function ia(a) {
+        if (0 == a.length) return null;
+        for (var b = {}, c = a[0], d = 1, e = 0; e < a.length; e++) {
+            var f = a[e];
+            null == b[f] ? b[f] = 1 : b[f]++, b[f] > d && (c = f, d = b[f])
+        }
+        return [c, d / a.length]
+    }
+
+    function ja(a) {
+        console.log(a), a.sort(function(a, b) {
+            return a - b
+        });
+        var b = Math.floor(a.length / 2);
+        return a.length % 2 ? a[b] : (a[b - 1] + a[b]) / 2
+    }
+    var a = [],
+        b = "",
+        c = "",
+        d = document.getElementById("searchTerm").value;
+    if (d.length > 0) {
+        var e = d.split(",");
+        for (k = 0; k < e.length; k++) b += "TERM=" + e[k] + ","
+    }
+    var f = b.split(",");
+    console.log(f);
+    var h = 1e4,
+        n = 0,
+        o = "",
+        p = 0,
+        s = 0;
+    for (i = 0; i < f.length; i++)
+        if (f[i].indexOf("???") > -1) c += "??";
+        else if (f[i].indexOf("TERM=") > -1) {
+        var t = f[i].replace("TERM=", "");
+        if (f[i].indexOf("ADVANCED=") > -1) {
+            t = f[i].replace("TERM=ADVANCED=", "");
+            var u = 'http://www.patentsview.org/api/patents/query?q=' + t + '&s=[{"patent_number":"desc"}]&o={"per_page":10000}&f=["patent_number","cited_patent_number","cited_patent_date"]';
+            console.log(u);
+            a.push(u)
+        } else if (t.indexOf('"') > -1) {
+            t = t.replace('"', ""), t = t.replace('"', "");
+            var u = 'http://www.patentsview.org/api/patents/query?q={"_or":[{"_text_phrase":{"patent_abstract":"' + t + '"}},{"_text_phrase":{"patent_title":"' + t + '"}}]}&s=[{"patent_number":"desc"}]&o={"per_page":10000}&f=["patent_number","cited_patent_number","cited_patent_date"]'
+        } else var u = 'http://www.patentsview.org/api/patents/query?q={"_or":[{"_text_all":{"patent_abstract":"' + t + '"}},{"_text_all":{"patent_title":"' + t + '"}}]}&s=[{"patent_number":"desc"}]&o={"per_page":10000}&f=["patent_number","cited_patent_number","cited_patent_date"]';
+        a.push(u)
+    } else c += f[i];
+    var y = "",
+        B = 0,
+        E = [],
+        F = [],
+        G = new Array,
+        H = new Array,
+        I = new Array,
+        J = new Array;
+    for (i = 1900; i < 2018; i++) G[i] = 0, H[i] = 0, E[i] = [], I[i] = 0, J[i] = 0, F[i] = [];
+    var L = (new Array, ""),
+        P = new Array,
+        Q = 0,
+        R = 0;
+    for (z = 0; z < a.length; z++) {
+        var S = String(a[z]),
+            T = "",
+            U = new XMLHttpRequest;
+        for (U.onreadystatechange = function() {
+                if (4 == U.readyState) {
+                    var a = U.responseText;
+                    T = JSON.parse(a), console.log(T)
+                }
+            }, U.open("GET", S, !1), U.send(), i = 0; i < T.patents.length; i++) {
+            if (T.patents[i].patent_number) var V = /^\d+$/.test(T.patents[i].patent_number);
+            if (V && L.indexOf(T.patents[i].patent_number) < 0 && Q < h) {
+                R++, L += T.patents[i].patent_number, P.push(T.patents[i].patent_number);
+                "http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=" + T.patents[i].patent_number + ".PN.&OS=PN/" + T.patents[i].patent_number + "&RS=PN/" + T.patents[i].patent_number + '" target="_blank">' + T.patents[i].patent_number, "</br><h2>" + T.patents[i].patent_title + "</h2></br>Invented by ";
+                for (j = 0; j < T.patents[i].cited_patents.length; j++)
+                    if (null !== T.patents[i].cited_patents[j].cited_patent_number && null !== T.patents[i].cited_patents[j].cited_patent_date) {
+                        var Y = T.patents[i].cited_patents[j].cited_patent_date.substring(0, 4);
+                        Y = parseInt(Y), G[Y]++, n++;
+                        var Z = T.patents[i].cited_patents[j].cited_patent_number + "d";
+                        if (o.indexOf(Z) > -1);
+                        else p++, o += Z;
+                        Y < 2017 && Y > 1899 && null !== T.patents[i].cited_patents[j].cited_patent_number && E[Y].push(T.patents[i].cited_patents[j].cited_patent_number)
+                    }
+                    
+            }
+        }
+    }
+    var _ = new Array,
+        aa = new Array;
+    for (i = 1978; i < 2016; i++) {
+        var ba = "",
+            ca = ia(E[i]),
+            da = 1;
+        null != ca ? (ba = String(ca[0]), da = ca[1]) : (ba = "", da = 1);
+        var ea = "";
+        if (null != ba) var ea = "http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=" + ba + ".PN.&OS=PN/" + ba + "&RS=PN/" + ba + '" target="_blank">US' + ba;
+        else var ea = "http://patft.uspto.gov";
+        document.getElementById('loading').innerHTML = '';
+        H[i] = G[i] - ja(Array(G[i - 2], G[i - 1], G[i], G[i + 1], G[i + 2])), _.push({
+            y: G[i],
+            url: ea
+        }), aa.push({
+            y: H[i] * da,
+            url: ea
+        });
+        var fa = H[i] * da;
+        fa > B && (B = fa, y = "<strong>Our Guess:</strong> The foundational patent for " + t + ' is <a href="' + ea + "</a>.")
+    }
+    var ga = new Array,
+        ha = new Array;
+    for (i = 1978; i < 2016; i++) {
+        J[i] = I[i] - ja(Array(I[i - 2], I[i - 1], I[i], I[i + 1], I[i + 2]));
+        var ba = "",
+            ca = ia(F[i]);
+        null != ca ? (ba = String(ca[0]), da = ca[1]) : (ba = "", da = 1);
+        var ea = "";
+        if (null != ba) var ea = "http://appft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PG01&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.html&r=1&f=G&l=50&s1=%22" + ba.substr(5, 11) + "%22.PGNR.&OS=DN/" + ba.substr(5, 11) + "&RS=DN/" + ba.substr(5, 11);
+        else var ea = "http://appft.uspto.gov";
+        ga.push({
+            y: I[i],
+            url: ea
+        }), ha.push({
+            y: J[i] * da,
+            url: ea
+        })
+    }
+    document.getElementById("receiver2").innerHTML = "", document.getElementById("receiver1").innerHTML = "", document.getElementById("receiver1").innerHTML = R + " Granted Patents Found", document.getElementById("receiver2").innerHTML = p + "  Unique Patent References Analyzed", document.getElementById("findings").innerHTML = y, jQuery.noConflict();
+    ! function(a) {
+        a(function() {
+            a("#canvas").highcharts({
+                chart: {
+                    zoomType: "xy"
+                },
+                title: {
+                    text: "Patent Citation Spectroscopy"
+                },
+                subtitle: {
+                    text: "Source: PatentsView"
+                },
+                xAxis: [{
+                    categories: ["1978", "1979", "1980", "1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989", "1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015"],
+                    labels: {
+                        enabled: !0
+                    },
+                    tickInterval: 10,
+                    title: {
+                        text: "Reference Patent Year"
+                    }
+                }],
+                yAxis: [{
+                    labels: {
+                        format: "{value}",
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    title: {
+                        text: "Frequency (Patents Referenced)",
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    }
+                }, {
+                    title: {
+                        text: "Citation Spectroscopy Curve",
+                        style: {
+                            color: "#d6604d"
+                        }
+                    },
+                    labels: {
+                        format: "{value}",
+                        style: {
+                            color: "#d6604d"
+                        }
+                    },
+                    opposite: !0
+                }],
+                tooltip: {
+                    pointFormat: "{series.name}: <b>{point.y}</b><br/>",
+                    shared: !0
+                },
+                legend: {
+                    layout: "vertical",
+                    align: "left",
+                    x: 40,
+                    verticalAlign: "top",
+                    y: 10,
+                    floating: !0,
+                    backgroundColor: Highcharts.theme && Highcharts.theme.legendBackgroundColor || "#FFFFFF"
+                },
+                plotOptions: {
+                    series: {
+                        cursor: "pointer",
+                        marker: {
+                            enabled: !1
+                        },
+                        point: {
+                            events: {
+                                click: function() {
+                                    window.open(this.url, "_blank")
+                                }
+                            }
+                        }
+                    }
+                },
+                series: [{
+                    name: "Raw Frequency",
+                    type: "column",
+                    color: "#bbbbbb",
+                    yAxis: 0,
+                    data: _,
+                    tooltip: {
+                        valueSuffix: ""
+                    }
+                }, {
+                    name: "Difference from Median",
+                    type: "spline",
+                    color: "#d6604d",
+                    yAxis: 1,
+                    data: aa,
+                    tooltip: {
+                        valueSuffix: ""
+                    }
+                }]
+            })
+        })
+    }(jQuery)
+}
+var maxCount = 1;
+  </script>
+
+        <div align="center">
+          <!--<a href="https://arxiv.org/pdf/1710.03349.pdf" target="_blank">arXiv preprint</a>-->
+  <br/>
+	Visualization leveraging <a href="https://highcharts.com">HighCharts</a>, under a <a href="https://creativecommons.org/licenses/by-nc/3.0/" target="_blank">Creative Commons (CC) Attribution-NonCommercial License</a>	<br/>
+	Cascading Style Sheets (CSS) and HTML elements designed by <a href="https://github.com/dansup/bulma-templates">Bulma Templates</a>, under the <a href="https://github.com/dansup/bulma-templates/blob/master/LICENSE" target="_blank">MIT License</a>
+  <br/>
+	Data harvested from <a href="http://www.patentsview.org/api/faqs.html">PatentsView</a>, under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons (CC) Attribution 4.0 International License</a>
+	<br/><br/>
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/3.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/3.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/3.0/">Creative Commons Attribution-NonCommercial 3.0 Unported License</a>.
+<br/>PCS Software created by J. Comins, S. Carmack and L. Leydesdorff, &#x24B8; MITRE Corporation
+</div>
+ </body>
+  </html>
